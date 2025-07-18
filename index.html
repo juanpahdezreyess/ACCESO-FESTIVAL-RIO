@@ -10,6 +10,7 @@
       --primary: #00C853;
       --dark: #007E33;
       --light: #B9F6CA;
+      --scanning: #FF9800;
     }
     
     body {
@@ -44,7 +45,6 @@
       margin: 0.5rem 0 0;
     }
     
-    /* Contenedor del escáner - CUADRADO */
     #reader {
       width: 90vmin;
       height: 90vmin;
@@ -59,7 +59,6 @@
       box-sizing: border-box;
     }
     
-    /* Botón de Escanear */
     #scan-button {
       padding: 15px 40px;
       background-color: var(--primary);
@@ -73,13 +72,12 @@
       margin-bottom: 1.5rem;
     }
     
-    #scan-button:hover {
-      background-color: var(--dark);
-      transform: translateY(-2px);
-      box-shadow: 0 6px 12px rgba(0, 200, 83, 0.4);
+    #scan-button.scanning {
+      background-color: var(--scanning);
+      transform: translateY(2px);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
     
-    /* Pantalla de resultado */
     #result-container {
       position: fixed;
       top: 0;
@@ -92,7 +90,7 @@
       align-items: center;
       justify-content: center;
       z-index: 100;
-      animation: fadeIn 0.5s ease;
+      animation: fadeIn 0.3s ease;
     }
     
     #result {
@@ -122,12 +120,6 @@
       transition: all 0.3s ease;
     }
     
-    #scan-again:hover {
-      background-color: var(--dark);
-      transform: translateY(-2px);
-      box-shadow: 0 6px 12px rgba(0, 200, 83, 0.4);
-    }
-    
     .footer {
       margin-top: 1rem;
       color: #aaa;
@@ -136,8 +128,8 @@
     }
     
     @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
     
     @keyframes bounce {
@@ -167,43 +159,53 @@
 
   <script>
     let qrScanner;
+    let scanTimeout;
 
     // Iniciar cámara (sin escanear)
     function startCamera() {
       qrScanner = new Html5Qrcode("reader");
       qrScanner.start(
         { facingMode: "environment" },
-        { fps: 10, qrbox: 0 }, // qrbox: 0 -> Sin detección de QR
-        () => {}, // No hacer nada al detectar (no se ejecutará)
-        () => {}  // Ignorar errores
+        { fps: 10, qrbox: 0 }, // qrbox: 0 -> Sin detección
+        () => {},
+        () => {}
       ).catch(err => {
-        console.error("Error al iniciar cámara:", err);
+        console.log("Cámara iniciada (simulación)");
       });
     }
 
-    // Simular escaneo (mostrar resultado)
+    // Simular escaneo (1 segundo)
     function simulateScan() {
-      // Efecto de "procesando" (opcional)
-      document.getElementById("scan-button").textContent = "Escaneando...";
-      document.getElementById("scan-button").style.backgroundColor = "#FF9800";
+      const scanBtn = document.getElementById("scan-button");
       
-      // Simular delay (2 segundos)
-      setTimeout(() => {
+      // Estado "Escaneando..."
+      scanBtn.textContent = "ESCANEANDO...";
+      scanBtn.classList.add("scanning");
+      
+      // Cancelar timeout previo (si existe)
+      if (scanTimeout) clearTimeout(scanTimeout);
+      
+      // Mostrar resultado después de 1 segundo
+      scanTimeout = setTimeout(() => {
         document.getElementById("result-container").style.display = "flex";
-        qrScanner.stop();
-      }, 2000);
+        scanBtn.textContent = "ESCANEAR";
+        scanBtn.classList.remove("scanning");
+      }, 1000); // 1 segundo
     }
 
-    // Reiniciar cámara
+    // Reiniciar
     function restartScanner() {
       document.getElementById("result-container").style.display = "none";
-      document.getElementById("scan-button").textContent = "ESCANEAR";
-      document.getElementById("scan-button").style.backgroundColor = "var(--primary)";
       startCamera();
     }
 
     // Iniciar al cargar
     window.onload = startCamera;
+    
+    // Limpiar timeout al salir
+    window.addEventListener('beforeunload', () => {
+      if (scanTimeout) clearTimeout(scanTimeout);
+    });
   </script>
 </body>
 </html>
